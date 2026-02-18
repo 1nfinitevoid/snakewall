@@ -385,6 +385,62 @@
     else if (k === "arrowright" || k === "d") setDirection(1, 0);
   });
 
+  // Touch controls (mobile)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
+
+  canvas.addEventListener(
+    "touchstart",
+    (e) => {
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchMoved = false;
+    },
+    { passive: true }
+  );
+
+  canvas.addEventListener(
+    "touchmove",
+    (e) => {
+      touchMoved = true;
+    },
+    { passive: true }
+  );
+
+  canvas.addEventListener(
+    "touchend",
+    (e) => {
+      if (!touchMoved) {
+        // Simple tap: start or pause/resume
+        if (state === "idle" || state === "gameover") start();
+        else pauseToggle();
+        return;
+      }
+
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      const threshold = 24;
+
+      if (absX < threshold && absY < threshold) return;
+
+      if (absX > absY) {
+        // horizontal swipe
+        if (dx > 0) setDirection(1, 0);
+        else setDirection(-1, 0);
+      } else {
+        // vertical swipe
+        if (dy > 0) setDirection(0, 1);
+        else setDirection(0, -1);
+      }
+    },
+    { passive: true }
+  );
+
   soundBtn.addEventListener("click", () => {
     soundOn = !soundOn;
     localStorage.setItem(STORAGE_KEY_SOUND, soundOn ? "1" : "0");
@@ -393,7 +449,10 @@
   });
 
   // Init overlay
-  showOverlay("Snake", "Press <b>Enter</b> to start.<br/><br/>Use <b>Arrow keys</b> or <b>WASD</b>.");
+  showOverlay(
+    "Snake",
+    "Press <b>Enter</b> or <b>tap</b> to start.<br/><br/>Use <b>Arrow keys / WASD</b> or <b>swipe</b> on mobile."
+  );
   state = "idle";
   resizeCanvasToFit();
   resetGame();
