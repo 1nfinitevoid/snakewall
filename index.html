@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snake</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="top">
+        <div class="title">
+          <div class="name">Snake</div>
+          <div class="sub">Arrow keys / WASD • Space: pause • Enter: restart</div>
+        </div>
+
+        <div class="hud" aria-label="Scoreboard">
+          <div class="hudItem">
+            <div class="hudLabel">Score</div>
+            <div class="hudValue" id="score">0</div>
+          </div>
+          <div class="hudItem">
+            <div class="hudLabel">Level</div>
+            <div class="hudValue" id="level">1</div>
+          </div>
+          <div class="hudItem">
+            <div class="hudLabel">Best</div>
+            <div class="hudValue" id="best">0</div>
+          </div>
+          <button class="btn" id="soundBtn" type="button" aria-pressed="true" title="Toggle sound">
+            Sound: On
+          </button>
+        </div>
+      </header>
+
+      <section class="stage" aria-label="Game">
+        <canvas id="game" width="600" height="600" aria-label="Snake game canvas"></canvas>
+        <div class="overlay" id="overlay" aria-live="polite">
+          <div class="card">
+            <div class="cardTitle" id="overlayTitle">Snake</div>
+            <div class="cardBody" id="overlayBody">
+              Press <b>Enter</b> to start.
+            </div>
+            <div class="cardHint">
+              Tip: you can press <b>Space</b> to pause any time.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="bottom">
+        <div class="pill">Grid-based, no libraries</div>
+        <div class="pill">Local best score saved</div>
+      </footer>
+    </main>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
