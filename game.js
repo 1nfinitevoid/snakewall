@@ -3,6 +3,7 @@
   /** @type {HTMLCanvasElement} */
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d", { alpha: false });
+  const stageEl = canvas.parentElement;
 
   const scoreEl = document.getElementById("score");
   const levelEl = document.getElementById("level");
@@ -13,7 +14,7 @@
   const soundBtn = document.getElementById("soundBtn");
 
   const GRID = 24; // cells per side
-  const CELL = canvas.width / GRID; // integer with width=600, GRID=24 => 25px
+  let CELL = canvas.width / GRID; // updated on resize
 
   const BASE_TICK_MS = 135; // starting speed (lower = faster)
   const STORAGE_KEY_BEST = "snake_web_best_v1";
@@ -60,6 +61,20 @@
 
   let lastTickAt = 0;
   let tickMs = BASE_TICK_MS;
+
+  function resizeCanvasToFit() {
+    if (!stageEl) return;
+    const rect = stageEl.getBoundingClientRect();
+    const size = Math.floor(Math.min(rect.width, rect.height));
+    const cell = Math.max(10, Math.floor(size / GRID));
+    const px = cell * GRID;
+
+    CELL = px / GRID;
+    canvas.width = px;
+    canvas.height = px;
+    canvas.style.width = `${px}px`;
+    canvas.style.height = `${px}px`;
+  }
 
   // Audio (tiny beeps via WebAudio)
   /** @type {AudioContext | null} */
@@ -380,8 +395,13 @@
   // Init overlay
   showOverlay("Snake", "Press <b>Enter</b> to start.<br/><br/>Use <b>Arrow keys</b> or <b>WASD</b>.");
   state = "idle";
+  resizeCanvasToFit();
   resetGame();
   requestAnimationFrame(loop);
+
+  window.addEventListener("resize", () => {
+    resizeCanvasToFit();
+  });
 
   // helpers
   function randInt(min, max) {
