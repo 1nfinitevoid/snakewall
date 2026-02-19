@@ -30,10 +30,30 @@
     text: "#eef2ff",
     bad: "#ef4444",
     obstacle: "rgba(248,113,113,.88)",
+    hole: "rgba(59,130,246,.5)",
+    holeRing: "rgba(96,165,250,.9)",
   };
 
   /** @type {{x:number,y:number}[]} */
   const obstacles = createObstacles();
+
+  /** Pairs of teleport holes: enter one, exit the other. */
+  const HOLES = [
+    [{ x: 2, y: 2 }, { x: GRID - 3, y: GRID - 3 }],
+    [{ x: 2, y: GRID - 3 }, { x: GRID - 3, y: 2 }],
+  ];
+
+  function getTeleportExit(pos) {
+    for (const [a, b] of HOLES) {
+      if (pos.x === a.x && pos.y === a.y) return b;
+      if (pos.x === b.x && pos.y === b.y) return a;
+    }
+    return null;
+  }
+
+  function isHole(pos) {
+    return getTeleportExit(pos) !== null;
+  }
 
   /** @type {number} */
   let best = clampInt(parseInt(localStorage.getItem(STORAGE_KEY_BEST) || "0", 10), 0, 999999);
@@ -166,9 +186,15 @@
   }
 
   function placeFood() {
+    const holeKeys = new Set();
+    HOLES.forEach(([a, b]) => {
+      holeKeys.add(`${a.x},${a.y}`);
+      holeKeys.add(`${b.x},${b.y}`);
+    });
     const occupied = new Set([
       ...snake.map((p) => `${p.x},${p.y}`),
       ...obstacles.map((p) => `${p.x},${p.y}`),
+      ...holeKeys,
     ]);
     for (let tries = 0; tries < 500; tries++) {
       const x = randInt(0, GRID - 1);
@@ -203,6 +229,14 @@
       return;
     }
 
+    // Teleport: if next is a hole, exit at the paired hole
+    const exit = getTeleportExit(next);
+    if (exit) {
+      next.x = exit.x;
+      next.y = exit.y;
+      beep(400, 50, "sine", 0.04);
+    }
+
     // Self collision (allow moving into the last tail cell if we are not growing)
     const willEat = next.x === food.x && next.y === food.y;
     const tail = snake[snake.length - 1];
@@ -233,6 +267,7 @@
 
     drawGrid();
     drawObstacles();
+    drawHoles();
     drawFood();
     drawSnake();
 
@@ -266,6 +301,26 @@
       const y = p.y * CELL;
       roundRect(ctx, x + 4, y + 4, CELL - 8, CELL - 8, 6);
       ctx.fill();
+    });
+  }
+
+  function drawHoles() {
+    const r = CELL * 0.38;
+    const ring = CELL * 0.12;
+    HOLES.forEach(([a, b]) => {
+      for (const p of [a, b]) {
+        const cx = p.x * CELL + CELL / 2;
+        const cy = p.y * CELL + CELL / 2;
+        ctx.fillStyle = COLORS.hole;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = COLORS.holeRing;
+        ctx.lineWidth = ring;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r - ring / 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     });
   }
 
@@ -490,15 +545,15 @@
   }
 
   function updateDifficulty() {
-    // Every 40 points is a new level: 1, 2, 3, ...
-    level = 1 + Math.floor(score / 40);
-    level = clampInt(level, 1, 12);
+    // Every 60 points is a new level (slower progression)
+    level = 1 + Math.floor(score / 60);
+    level = clampInt(level, 1, 15);
     levelEl.textContent = String(level);
 
-    // Medium curve: start at BASE_TICK_MS and decrease a bit each level.
-    const step = Math.min(8, level - 1);
-    tickMs = BASE_TICK_MS - step * 8; // 135, 127, 119, ...
-    if (tickMs < 70) tickMs = 70; // don't get impossibly fast
+    // Slow curve: small speed increase per level
+    const step = Math.min(12, level - 1);
+    tickMs = BASE_TICK_MS - step * 5; // 135, 130, 125, ...
+    if (tickMs < 75) tickMs = 75; // don't get impossibly fast
   }
 
   function createObstacles() {
